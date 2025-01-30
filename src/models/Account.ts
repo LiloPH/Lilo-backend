@@ -1,29 +1,32 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
+import { generateOTP } from "../utils";
 
 type Role = "user" | "admin" | "merchant";
 
 interface AccountType {
   name: string;
-  email?: string;
-  username?: string;
-  password?: string;
-  googleId?: string;
-  picture?: string;
+  email?: string | undefined;
+  username?: string | undefined;
+  password?: string | undefined;
+  googleId?: string | undefined;
+  picture?: string | undefined;
   role: Role;
   key: string;
   verified: {
     email_verified: Boolean;
-    email_token: String | null;
+    email_otp: String | null;
     email_token_expiration: Date | null;
   };
   password_rest: {
-    reset_token: String | null;
+    reset_otp: String | null;
     reset_expiration: Date | null;
   };
   checkPassword: (inputPassword: string) => Promise<boolean>;
   generateToken: () => Promise<string>;
+  generateEmailOtp: () => Promise<string>;
+  verifyEmailOtp: (otp: string) => Promise<boolean>;
 }
 
 const accountSchema = new mongoose.Schema<AccountType>(
@@ -60,6 +63,7 @@ const accountSchema = new mongoose.Schema<AccountType>(
       type: String,
       unique: true,
       sparse: true,
+      default: undefined,
     },
     picture: {
       type: String,
@@ -67,17 +71,18 @@ const accountSchema = new mongoose.Schema<AccountType>(
     role: {
       type: String,
       enum: ["user", "admin", "merchant"],
+      default: "user",
     },
     key: {
       type: String,
     },
     verified: {
       email_verified: { type: Boolean, default: false },
-      email_token: { type: String, default: null },
+      email_otp: { type: String, default: null },
       email_token_expiration: { type: Date, default: null },
     },
     password_rest: {
-      reset_token: { type: String, default: null },
+      reset_otp: { type: String, default: null },
       reset_expiration: { type: Date, default: null },
     },
   },
@@ -101,6 +106,29 @@ accountSchema.methods.generateToken = async function () {
   const api_key = await crypto.randomBytes(32).toString("hex");
   this.key = api_key;
   return api_key;
+};
+
+accountSchema.methods.generateEmailOtp = async function () {
+  const otp = generateOTP();
+  this.verified.email_otp = otp;
+  this.verified.email_token_expiration = new Date(Date.now() + 5 * 60 * 1000);
+  await this.save();
+  return otp;
+};
+
+accountSchema.methods.verifyEmailOtp = async function (otp: string) {
+  if (
+    this.verified.email_otp === otp &&
+    this.verified.email_token_expiration &&
+    this.verified.email_token_expiration > new Date()
+  ) {
+    this.verified.email_verified = true;
+    this.verified.email_otp = null;
+    this.verified.email_token_expiration = null;
+    await this.save();
+    return true;
+  }
+  return false;
 };
 
 export default mongoose.model<AccountType>("Account", accountSchema);

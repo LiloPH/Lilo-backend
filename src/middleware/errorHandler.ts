@@ -16,6 +16,7 @@ const errorHandler = (
 ) => {
   let statusCode = 500;
   let message = "Something went wrong";
+  console.log(err);
 
   if (err instanceof BadRequest) {
     statusCode = err.statusCode;
