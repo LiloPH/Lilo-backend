@@ -26,15 +26,13 @@ const authKey = async (
   res: Response,
   next: NextFunction
 ) => {
-  const authKey = req.headers["authorization"];
+  const authKey = req.headers["x-api-key"];
 
-  if (!authKey || authKey.startsWith("Bearer ")) {
+  if (!authKey) {
     throw new UnauthenticatedError("Invalid Access");
   }
 
-  const key = authKey.split(" ")[1];
-
-  const account = await Account.findOne({ key: key });
+  const account = await Account.findOne({ key: authKey });
 
   if (!account) {
     throw new UnauthenticatedError("Invalid Access");
@@ -43,7 +41,7 @@ const authKey = async (
   req.user = {
     userId: account._id.toString(),
     name: account.name,
-    email: account.email || "",
+    email: account.email,
     role: account.role,
   };
 
@@ -77,6 +75,7 @@ const authToken = async (
       email: payload.email,
       role: payload.role,
     };
+    next();
   } catch (error) {
     if (error instanceof jwt.TokenExpiredError) {
       throw new UnauthenticatedError("Token is expired");

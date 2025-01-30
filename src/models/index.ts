@@ -1,5 +1,3 @@
 import Account from "./Account";
-
-export{
-    Account
-}
+import Token from "./Token";
+export { Account, Token };
