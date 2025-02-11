@@ -3,6 +3,8 @@ import {
   loginAdmin,
   adminLogout,
   adminRefresh,
+  loginUser,
+  adminUserLogout,
 } from "../controller/auth-controller";
 import joiValidaiton from "../middleware/joiValidation";
 const router = express.Router();
@@ -17,14 +19,13 @@ const loginRegiserLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-router.post(
-  "/admin-login",
-  loginRegiserLimiter,
-  joiValidaiton(loginSchema.loginSchema),
-  loginAdmin
-);
+router.use(loginRegiserLimiter);
 
+router.post("/admin-login", joiValidaiton(loginSchema.loginSchema), loginAdmin);
 router.delete("/admin-logout", adminLogout);
 router.get("/admin-refresh", adminRefresh);
+
+router.post("/user-login", joiValidaiton(loginSchema.loginSchema), loginUser);
+router.delete("/user-logout", adminUserLogout);
 
 export default router;

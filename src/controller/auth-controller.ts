@@ -32,7 +32,7 @@ const loginAdmin = async (req: Request, res: Response): Promise<any> => {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
-    return res.status(201).json({
+    return res.status(StatusCodes.CREATED).json({
       user: {
         id: newAccount._id,
         name: newAccount.name,
@@ -53,7 +53,7 @@ const loginAdmin = async (req: Request, res: Response): Promise<any> => {
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   });
 
-  res.json({
+  res.status(StatusCodes.OK).json({
     user: {
       id: account._id,
       name: account.name,
@@ -106,7 +106,66 @@ const adminRefresh = async (req: Request, res: Response) => {
 
   if (!status) throw new BadRequest("failed");
 
-  res.json({ id_token });
+  res.status(StatusCodes.OK).json({ id_token });
 };
 
-export { loginAdmin, adminLogout, adminRefresh };
+const loginUser = async (req: Request, res: Response): Promise<any> => {
+  const { code } = req.body;
+
+  const { payload, status, message } = await validateServerAuth(code);
+
+  if (!status) throw new BadRequest(message);
+
+  const account = await Account.findOne({ googleId: payload.sub });
+
+  if (!account) {
+    const newAccount = await Account.create({
+      googleId: payload.sub,
+      name: payload.name,
+      email: payload.email,
+      picture: payload.picture,
+    });
+
+    const key = await newAccount.generateToken();
+
+    return res.status(StatusCodes.CREATED).json({
+      user: {
+        id: newAccount._id,
+        name: newAccount.name,
+        email: newAccount.email,
+        picture: newAccount.picture,
+      },
+      key,
+    });
+  }
+
+  const key = await account?.generateToken();
+
+  res.status(StatusCodes.OK).json({
+    user: {
+      id: account?._id,
+      name: account?.name,
+      email: account?.email,
+      picture: account?.picture,
+    },
+    key,
+  });
+};
+
+const adminUserLogout = async (req: Request, res: Response) => {
+  const key = req.headers["x-api-key"];
+
+  if (!key) {
+    throw new BadRequest("Invalid Access");
+  }
+
+  const account = await Account.findOne({ apiKey: key });
+
+  if (!account) throw new BadRequest("Invalid Access");
+
+  await Token.create({ tokenType: "key", token: key });
+
+  res.status(StatusCodes.OK).json({ status: "success" });
+};
+
+export { loginAdmin, adminLogout, adminRefresh, loginUser, adminUserLogout };
