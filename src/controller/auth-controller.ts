@@ -1,16 +1,16 @@
 import { Response, Request } from "express";
 import { BadRequest } from "../errors";
 import { Account, Token } from "../models";
-import { validateServerAuth } from "../utils";
+import { validateServerAuth, validateRefreshToken } from "../utils";
 import { StatusCodes } from "http-status-codes";
 
 const loginAdmin = async (req: Request, res: Response): Promise<any> => {
   const { code } = req.body;
 
-  const { payload, status, refresh_token, id_token, error } =
+  const { payload, status, refresh_token, id_token, message } =
     await validateServerAuth(code);
 
-  if (!status) throw new BadRequest(error);
+  if (!status) throw new BadRequest(message);
 
   const account = await Account.findOne({ googleId: payload.sub });
 
@@ -90,4 +90,23 @@ const adminLogout = async (req: Request, res: Response) => {
   res.status(StatusCodes.OK).json({ status: "success" });
 };
 
-export { loginAdmin, adminLogout };
+const adminRefresh = async (req: Request, res: Response) => {
+  const refreshToken = req.cookies.refresh_token;
+
+  if (!refreshToken) throw new BadRequest("Token not exist");
+
+  const refreshTokenExists = await Token.findOne({
+    tokenType: "refresh",
+    token: refreshToken,
+  });
+
+  if (refreshTokenExists) throw new BadRequest("token revoked");
+
+  const { status, id_token } = await validateRefreshToken(refreshToken);
+
+  if (!status) throw new BadRequest("failed");
+
+  res.json({ id_token });
+};
+
+export { loginAdmin, adminLogout, adminRefresh };

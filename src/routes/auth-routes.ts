@@ -1,5 +1,9 @@
 import express from "express";
-import { loginAdmin, adminLogout } from "../controller/auth-controller";
+import {
+  loginAdmin,
+  adminLogout,
+  adminRefresh,
+} from "../controller/auth-controller";
 import joiValidaiton from "../middleware/joiValidation";
 const router = express.Router();
 import rateLimit from "express-rate-limit";
@@ -21,5 +25,6 @@ router.post(
 );
 
 router.delete("/admin-logout", adminLogout);
+router.get("/admin-refresh", adminRefresh);
 
 export default router;
