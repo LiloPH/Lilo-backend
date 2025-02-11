@@ -4,65 +4,90 @@ import { Account, Token } from "../models";
 import { validateServerAuth } from "../utils";
 import { StatusCodes } from "http-status-codes";
 
-const login = async (req: Request, res: Response): Promise<any> => {
-  const { serverauth } = req.body;
+const loginAdmin = async (req: Request, res: Response): Promise<any> => {
+  const { code } = req.body;
 
-  if (serverauth) {
-    const payload = await validateServerAuth(serverauth);
-    if (!payload) {
-      throw new BadRequest("Invalid Credentials");
-    }
+  const { payload, status, refresh_token, id_token, error } =
+    await validateServerAuth(code);
 
-    const account = await Account.findOne({ email: payload.email });
+  if (!status) throw new BadRequest(error);
 
-    if (!account) {
-      const newAccount = await Account.create({
-        name: payload.name,
-        email: payload.email,
-        picture: payload.picture,
-      });
+  const account = await Account.findOne({ googleId: payload.sub });
 
-      const key = await newAccount.generateToken();
+  if (!account) {
+    const newAccount = await Account.create({
+      googleId: payload.sub,
+      name: payload.name,
+      email: payload.email,
+      picture: payload.picture,
+    });
 
-      return res.status(201).json({
-        status: "success",
-        user: {
-          name: newAccount.name,
-          email: newAccount.email,
-          picture: newAccount.picture,
-        },
-        key,
-      });
-    }
+    const key = await newAccount.generateToken();
 
-    const key = await account.generateToken();
-    return res.json({
-      status: "success",
+    res.cookie("refresh_token", refresh_token, {
+      httpOnly: true,
+      sameSite: "strict",
+      secure: process.env.NODE_ENV === "production",
+      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    return res.status(201).json({
       user: {
-        name: account.name,
-        email: account.email,
-        picture: account.picture,
+        id: newAccount._id,
+        name: newAccount.name,
+        email: newAccount.email,
+        picture: newAccount.picture,
       },
       key,
+      id_token,
     });
   }
+  const key = await account.generateToken();
+
+  res.cookie("refresh_token", refresh_token, {
+    httpOnly: true,
+    sameSite: "strict",
+    secure: process.env.NODE_ENV === "production",
+    expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  });
+
+  res.json({
+    user: {
+      id: account._id,
+      name: account.name,
+      email: account.email,
+      picture: account.picture,
+    },
+    key,
+    id_token,
+  });
 };
 
-const logout = async (req: Request, res: Response) => {
-  const authKey = req.headers["x-api-key"];
+const adminLogout = async (req: Request, res: Response) => {
+  const refreshToken = req.cookies.refresh_token;
+  const authHeaders = req.headers["authorization"];
+  const key = req.headers["x-api-key"];
 
-  if (!authKey) {
+  if (
+    !refreshToken ||
+    !authHeaders ||
+    !authHeaders.startsWith("Bearer ") ||
+    !key
+  ) {
     throw new BadRequest("Invalid Access");
   }
 
-  const account = await Account.findOne({ key: authKey });
-  if (!account) {
-    throw new BadRequest("Invalid Access");
-  }
+  const idToken = authHeaders.split(" ")[1];
 
-  await Token.create({ token: authKey, tokenType: "key", userId: account._id });
+  await Token.create({ tokenType: "refresh", token: refreshToken });
+  await Token.create({ tokenType: "id_token", token: idToken });
+  await Token.create({ tokenType: "key", token: key });
+
+  res.clearCookie("refresh_token");
 
   res.status(StatusCodes.OK).json({ status: "success" });
 };
 
-export { login, logout };
+export { loginAdmin, adminLogout };

@@ -1,9 +1,9 @@
 import Joi from "joi";
 
 const loginSchema = Joi.object({
-  serverAuth: Joi.string().required().messages({
-    "any.required": "serverAuth is required",
-    "string.empty": "serverAuth cannot be empty",
+  code: Joi.string().required().messages({
+    "any.required": "code is required",
+    "string.empty": "code cannot be empty",
   }),
 });
 

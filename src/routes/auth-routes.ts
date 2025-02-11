@@ -1,8 +1,9 @@
 import express from "express";
-import { login, logout } from "../controller/auth-controller";
+import { loginAdmin, adminLogout } from "../controller/auth-controller";
 import joiValidaiton from "../middleware/joiValidation";
 const router = express.Router();
 import rateLimit from "express-rate-limit";
+import loginSchema from "../validation/auth-validation";
 
 const loginRegiserLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute,
@@ -12,8 +13,13 @@ const loginRegiserLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-router.post("/login", login);
+router.post(
+  "/admin-login",
+  loginRegiserLimiter,
+  joiValidaiton(loginSchema.loginSchema),
+  loginAdmin
+);
 
-router.delete("/logout", logout);
+router.delete("/admin-logout", adminLogout);
 
 export default router;

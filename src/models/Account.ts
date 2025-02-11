@@ -1,7 +1,5 @@
 import mongoose from "mongoose";
-import bcrypt from "bcryptjs";
 import crypto from "crypto";
-import { generateOTP } from "../utils";
 
 type Role = "user" | "admin" | "merchant";
 
