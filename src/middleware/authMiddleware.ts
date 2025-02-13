@@ -2,6 +2,7 @@ import { UnauthenticatedError } from "../errors";
 import { Account } from "../models";
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
+import { validateIdToken } from "../utils";
 
 type Role = "user" | "admin" | "merchant";
 
@@ -55,26 +56,28 @@ const authToken = async (
 ) => {
   const authToken = req.headers["authorization"];
 
-  if (!authToken || authToken.startsWith("Bearer ")) {
-    throw new UnauthenticatedError("Invalid Access");
+  if (!authToken || !authToken.startsWith("Bearer ")) {
+    throw new UnauthenticatedError("Invalid token");
   }
 
   const token = authToken.split(" ")[1];
 
-  const secret = process.env.JWT_SECRET_ACCESS;
-  if (!secret) {
-    throw new Error("JWT_SECRET_ACCESS environment variable is not defined");
-  }
-
   try {
-    const payload = jwt.verify(token, secret) as JwtPayload;
+    const { status, payload } = await validateIdToken(token);
+
+    if (!status) throw new UnauthenticatedError("status failed");
+
+    const account = await Account.findOne({ email: payload?.email });
+
+    if (!account) throw new UnauthenticatedError("Invalid Access");
 
     req.user = {
-      userId: payload.userId,
-      name: payload.name,
-      email: payload.email,
-      role: payload.role,
+      userId: account._id.toString(),
+      name: account.name,
+      email: account.email,
+      role: account.role,
     };
+
     next();
   } catch (error) {
     if (error instanceof jwt.TokenExpiredError) {

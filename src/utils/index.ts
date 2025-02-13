@@ -3,6 +3,7 @@ import validateServerAuth from "./validateServerAuth";
 import { confirmationEmail } from "./email/confirmation";
 import generateOTP from "./generateOTP";
 import validateRefreshToken from "./validateRefreshToken";
+import validateIdToken from "./validateIdToken";
 
 export {
   connectDB,
@@ -10,4 +11,5 @@ export {
   confirmationEmail,
   generateOTP,
   validateRefreshToken,
+  validateIdToken,
 };

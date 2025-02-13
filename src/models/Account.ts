@@ -24,6 +24,11 @@ const accountSchema = new mongoose.Schema<AccountType>(
       unique: true,
       sparse: true,
     },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+    },
     picture: {
       type: String,
     },
@@ -42,6 +47,7 @@ const accountSchema = new mongoose.Schema<AccountType>(
 accountSchema.methods.generateToken = async function () {
   const api_key = await crypto.randomBytes(32).toString("hex");
   this.key = api_key;
+  await this.save();
   return api_key;
 };
 
