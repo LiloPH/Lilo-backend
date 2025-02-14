@@ -13,7 +13,7 @@ import loginSchema from "../validation/auth-validation";
 
 const loginRegiserLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute,
-  max: 5, // 10 requests per minute
+  max: 10, // 10 requests per minute
   message: "Too many request from this IP, please try again after an hour",
   standardHeaders: true,
   legacyHeaders: false,

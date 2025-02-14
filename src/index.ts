@@ -6,15 +6,22 @@ import errorHandler from "./middleware/errorHandler";
 import "express-async-errors";
 import cookieParser from "cookie-parser";
 const cors = require("cors");
+const morgan = require("morgan");
 import { adminRoutes, authRoutes, userRoutes } from "./routes";
 
 const app: Express = express();
 const port = process.env.PORT || 3000;
 const db_url = process.env.DB_LOCAL_URI!;
 
+app.use(morgan("tiny"));
 app.use(express.json());
 app.use(cookieParser());
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:2003",
+    credentials: true,
+  })
+);
 
 app.get("/", (req: Request, res: Response) => {
   res.send("Hello World");

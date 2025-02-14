@@ -1,5 +1,5 @@
 import { Response, Request } from "express";
-import { BadRequest } from "../errors";
+import { BadRequest, UnauthenticatedError } from "../errors";
 import { Account, Token } from "../models";
 import { validateServerAuth, validateRefreshToken } from "../utils";
 import { StatusCodes } from "http-status-codes";
@@ -14,6 +14,10 @@ const loginAdmin = async (req: Request, res: Response): Promise<any> => {
 
   const account = await Account.findOne({ googleId: payload.sub });
 
+  if (!account || account.role !== "admin") {
+    throw new UnauthenticatedError("Unathorized access");
+  }
+
   if (!account) {
     const newAccount = await Account.create({
       googleId: payload.sub,
@@ -22,26 +26,28 @@ const loginAdmin = async (req: Request, res: Response): Promise<any> => {
       picture: payload.picture,
     });
 
-    const key = await newAccount.generateToken();
+    await newAccount.generateToken();
 
-    res.cookie("refresh_token", refresh_token, {
-      httpOnly: true,
-      sameSite: "strict",
-      secure: process.env.NODE_ENV === "production",
-      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    });
+    throw new UnauthenticatedError("Unathorized access");
 
-    return res.status(StatusCodes.CREATED).json({
-      user: {
-        id: newAccount._id,
-        name: newAccount.name,
-        email: newAccount.email,
-        picture: newAccount.picture,
-      },
-      key,
-      id_token,
-    });
+    // res.cookie("refresh_token", refresh_token, {
+    //   httpOnly: true,
+    //   sameSite: "strict",
+    //   secure: process.env.NODE_ENV === "production",
+    //   expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    //   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    // });
+
+    // return res.status(StatusCodes.CREATED).json({
+    //   user: {
+    //     id: newAccount._id,
+    //     name: newAccount.name,
+    //     email: newAccount.email,
+    //     picture: newAccount.picture,
+    //   },
+    //   key,
+    //   id_token,
+    // });
   }
   const key = await account.generateToken();
 
