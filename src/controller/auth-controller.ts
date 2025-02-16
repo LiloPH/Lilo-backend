@@ -1,7 +1,11 @@
 import { Response, Request } from "express";
 import { BadRequest, UnauthenticatedError } from "../errors";
 import { Account, Token } from "../models";
-import { validateServerAuth, validateRefreshToken } from "../utils";
+import {
+  validateServerAuth,
+  validateRefreshToken,
+  validateIdToken,
+} from "../utils";
 import { StatusCodes } from "http-status-codes";
 
 const loginAdmin = async (req: Request, res: Response): Promise<any> => {
@@ -76,6 +80,8 @@ const adminLogout = async (req: Request, res: Response) => {
   const authHeaders = req.headers["authorization"];
   const key = req.headers["x-api-key"];
 
+  console.log(refreshToken, authHeaders, key);
+
   if (
     !refreshToken ||
     !authHeaders ||
@@ -99,20 +105,38 @@ const adminLogout = async (req: Request, res: Response) => {
 const adminRefresh = async (req: Request, res: Response) => {
   const refreshToken = req.cookies.refresh_token;
 
-  if (!refreshToken) throw new BadRequest("Token not exist");
+  if (!refreshToken) throw new UnauthenticatedError("Token not exist");
 
   const refreshTokenExists = await Token.findOne({
     tokenType: "refresh",
     token: refreshToken,
   });
 
-  if (refreshTokenExists) throw new BadRequest("token revoked");
+  if (refreshTokenExists) throw new UnauthenticatedError("token revoked");
 
   const { status, id_token } = await validateRefreshToken(refreshToken);
 
-  if (!status) throw new BadRequest("failed");
+  if (!status) throw new UnauthenticatedError("Failed");
+  if (!id_token) throw new UnauthenticatedError("Failed");
 
-  res.status(StatusCodes.OK).json({ id_token });
+  const { status: status2, payload } = await validateIdToken(id_token);
+
+  if (!status2) throw new UnauthenticatedError("Failed");
+
+  const account = await Account.findOne({ googleId: payload?.sub });
+
+  if (!account) throw new UnauthenticatedError("Failed");
+
+  res.status(StatusCodes.OK).json({
+    id_token,
+    key: account.key,
+    user: {
+      id: account._id,
+      name: account.name,
+      email: account.email,
+      picture: account.picture,
+    },
+  });
 };
 
 const loginUser = async (req: Request, res: Response): Promise<any> => {
@@ -158,7 +182,7 @@ const loginUser = async (req: Request, res: Response): Promise<any> => {
   });
 };
 
-const adminUserLogout = async (req: Request, res: Response) => {
+const logoutUser = async (req: Request, res: Response) => {
   const key = req.headers["x-api-key"];
 
   if (!key) {
@@ -174,4 +198,4 @@ const adminUserLogout = async (req: Request, res: Response) => {
   res.status(StatusCodes.OK).json({ status: "success" });
 };
 
-export { loginAdmin, adminLogout, adminRefresh, loginUser, adminUserLogout };
+export { loginAdmin, adminLogout, adminRefresh, loginUser, logoutUser };

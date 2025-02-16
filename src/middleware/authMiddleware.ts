@@ -67,7 +67,7 @@ const authToken = async (
 
     if (!status) throw new UnauthenticatedError("status failed");
 
-    const account = await Account.findOne({ email: payload?.email });
+    const account = await Account.findOne({ googleId: payload?.sub });
 
     if (!account) throw new UnauthenticatedError("Invalid Access");
 

@@ -1,5 +1,4 @@
 import { OAuth2Client } from "google-auth-library";
-import { UnauthenticatedError } from "../errors";
 
 const CLIENT_ID = process.env.WEB_CLIENT_ID;
 const CLIENT_SECRET = process.env.GOOGLE_WEB_CLIENT_SECRET;

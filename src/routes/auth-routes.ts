@@ -4,7 +4,7 @@ import {
   adminLogout,
   adminRefresh,
   loginUser,
-  adminUserLogout,
+  logoutUser,
 } from "../controller/auth-controller";
 import joiValidaiton from "../middleware/joiValidation";
 const router = express.Router();
@@ -26,6 +26,6 @@ router.delete("/admin-logout", adminLogout);
 router.get("/admin-refresh", adminRefresh);
 
 router.post("/user-login", joiValidaiton(loginSchema.loginSchema), loginUser);
-router.delete("/user-logout", adminUserLogout);
+router.delete("/user-logout", logoutUser);
 
 export default router;
