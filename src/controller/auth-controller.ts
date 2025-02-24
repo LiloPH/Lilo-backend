@@ -18,10 +18,6 @@ const loginAdmin = async (req: Request, res: Response): Promise<any> => {
 
   const account = await Account.findOne({ googleId: payload.sub });
 
-  if (!account || account.role !== "admin") {
-    throw new UnauthenticatedError("Unathorized access");
-  }
-
   if (!account) {
     const newAccount = await Account.create({
       googleId: payload.sub,
@@ -80,8 +76,6 @@ const adminLogout = async (req: Request, res: Response) => {
   const authHeaders = req.headers["authorization"];
   const key = req.headers["x-api-key"];
 
-  console.log(refreshToken, authHeaders, key);
-
   if (
     !refreshToken ||
     !authHeaders ||
@@ -105,27 +99,27 @@ const adminLogout = async (req: Request, res: Response) => {
 const adminRefresh = async (req: Request, res: Response) => {
   const refreshToken = req.cookies.refresh_token;
 
-  if (!refreshToken) throw new UnauthenticatedError("Token not exist");
+  if (!refreshToken) throw new BadRequest("Token not exist");
 
   const refreshTokenExists = await Token.findOne({
     tokenType: "refresh",
     token: refreshToken,
   });
 
-  if (refreshTokenExists) throw new UnauthenticatedError("token revoked");
+  if (refreshTokenExists) throw new BadRequest("token revoked");
 
   const { status, id_token } = await validateRefreshToken(refreshToken);
 
-  if (!status) throw new UnauthenticatedError("Failed");
-  if (!id_token) throw new UnauthenticatedError("Failed");
+  if (!status) throw new BadRequest("Failed");
+  if (!id_token) throw new BadRequest("Failed");
 
   const { status: status2, payload } = await validateIdToken(id_token);
 
-  if (!status2) throw new UnauthenticatedError("Failed");
+  if (!status2) throw new BadRequest("Failed");
 
   const account = await Account.findOne({ googleId: payload?.sub });
 
-  if (!account) throw new UnauthenticatedError("Failed");
+  if (!account) throw new BadRequest("Failed");
 
   res.status(StatusCodes.OK).json({
     id_token,
