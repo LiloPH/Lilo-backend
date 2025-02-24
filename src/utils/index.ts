@@ -4,6 +4,7 @@ import { confirmationEmail } from "./email/confirmation";
 import generateOTP from "./generateOTP";
 import validateRefreshToken from "./validateRefreshToken";
 import validateIdToken from "./validateIdToken";
+import updateVersion from "./updateRouteVersion";
 
 export {
   connectDB,
@@ -12,4 +13,5 @@ export {
   generateOTP,
   validateRefreshToken,
   validateIdToken,
+  updateVersion,
 };
