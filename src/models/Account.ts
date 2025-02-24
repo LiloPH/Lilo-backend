@@ -31,6 +31,8 @@ const accountSchema = new mongoose.Schema<AccountType>(
     },
     picture: {
       type: String,
+      default:
+        "https://res.cloudinary.com/dtmqzxchr/image/upload/v1739724089/default-profile_slswii.png",
     },
     role: {
       type: String,

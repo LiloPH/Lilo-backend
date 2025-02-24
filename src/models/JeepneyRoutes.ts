@@ -17,6 +17,7 @@ interface LocationType {
 }
 
 interface JeepneyRouteType {
+  _id: string;
   routeNo: number;
   routeName: string;
   routeColor: string;
