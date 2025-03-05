@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { JeepneyRoute } from "../models/";
+import { JeepneyRoute, RouteLogs } from "../models/";
 import { StatusCodes } from "http-status-codes";
 import { BadRequest, NotFoundError } from "../errors";
 import { updateVersion } from "../utils";
@@ -13,9 +13,13 @@ const createRoute = async (req: Request, res: Response) => {
     routeColor,
   });
 
-  await updateVersion();
-
-  res.status(StatusCodes.CREATED).json(route);
+  res.status(StatusCodes.CREATED).json({
+    _id: route._id,
+    routeNo: route.routeNo,
+    routeName: route.routeName,
+    routeColor: route.routeColor,
+    status: route.status,
+  });
 };
 
 const getRoutes = async (req: Request, res: Response) => {
@@ -44,7 +48,7 @@ const updateRoute = async (req: Request, res: Response) => {
 
   const route = await JeepneyRoute.findById(id);
 
-  if (route) throw new NotFoundError("Route not found");
+  if (!route) throw new NotFoundError("Route not found");
 
   const upadtedRoute = await JeepneyRoute.findByIdAndUpdate(
     id,
@@ -57,6 +61,20 @@ const updateRoute = async (req: Request, res: Response) => {
   res.status(StatusCodes.OK).json(upadtedRoute);
 };
 
-const deleteRoute = async (req: Request, res: Response) => {};
+const deleteRoute = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  const route = await JeepneyRoute.findById(id);
+
+  if (!route) throw new NotFoundError("Route not found");
+
+  const deleteRoute = await JeepneyRoute.findByIdAndDelete(id);
+
+  await RouteLogs.deleteMany({ route: id });
+
+  res
+    .status(StatusCodes.OK)
+    .json({ message: `Route Number:${route.routeNo} successfully deleted ` });
+};
 
 export { createRoute, getRoutes, getRoute, updateRoute, deleteRoute };

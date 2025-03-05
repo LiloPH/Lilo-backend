@@ -7,7 +7,7 @@ import "express-async-errors";
 import cookieParser from "cookie-parser";
 const cors = require("cors");
 const morgan = require("morgan");
-import { adminRoutes, authRoutes, userRoutes } from "./routes";
+import { adminRoutes, authRoutes, userRoutes, jeepneyRoutes } from "./routes";
 
 const app: Express = express();
 const port = process.env.PORT || 3000;
@@ -30,6 +30,7 @@ app.get("/", (req: Request, res: Response) => {
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/user", userRoutes);
+app.use("/api/v1/routes", jeepneyRoutes);
 
 app.use(errorHandler);
 app.use(notFound);
