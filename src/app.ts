@@ -22,7 +22,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
-    origin: "http://localhost:2003",
+    origin: ["http://localhost:2003", "https://lilo-two.vercel.app"],
     credentials: true,
   })
 );
