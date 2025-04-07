@@ -2,7 +2,7 @@ import { app } from "./app";
 import { connectDB } from "./utils";
 
 const port = process.env.PORT || 3000;
-const db_url = process.env.DB_LOCAL_URI!;
+const db_url = process.env.DB_URL!;
 
 const start = async () => {
   await connectDB(db_url);
