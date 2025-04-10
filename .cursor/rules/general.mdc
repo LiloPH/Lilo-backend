@@ -1,0 +1,57 @@
+---
+description: Backend best practices for liloph-lilo-backend using Express, TypeScript, and modular design
+globs:
+  - liloph-lilo-backend/**
+alwaysApply: false
+---
+
+// Express + TypeScript Best Practices for liloph-lilo-backend
+
+const backendBestPractices = [
+  "Use 'controller/' to keep route logic separate from HTTP handlers",
+  "Keep all schema validations in 'validation/' with Joi or Zod",
+  "Use 'middleware/' for reusable HTTP middleware (auth, validation, error handlers)",
+  "Store domain models and Mongoose schemas inside 'models/'",
+  "Separate route definitions into modular files in 'routes/'",
+  "Centralize utilities in 'utils/', including database, token, and email logic",
+  "Use custom error classes under 'errors/' to enforce consistent error handling",
+  "Group testing files under 'test/' with appropriate `.test.ts` naming",
+  "Implement index.ts files to simplify imports from folders",
+  "Maintain a clear and composable startup flow (index.ts → app.ts)",
+];
+
+// Folder Structure (based on liloph-lilo-backend)
+
+const folderStructure = `
+src/
+  ├── controller/
+  ├── errors/
+  ├── middleware/
+  ├── models/
+  ├── routes/
+  ├── test/
+  ├── utils/
+      └── email/
+  ├── validation/
+  ├── app.ts
+  └── index.ts
+jest.config.ts
+tsconfig.json
+package.json
+`;
+
+// Additional Guidelines
+
+const additionalGuidelines = `
+1. Use environment variables with dotenv for DB, JWT, and mail configs
+2. Avoid business logic inside routes – delegate to controllers and utils
+3. Use interfaces and types to enforce data contracts across modules
+4. Return meaningful error messages using your CustomError system
+5. Handle all async logic with try-catch or use centralized error middleware
+6. Organize route groups by domain (e.g., user-routes.ts, tour-routes.ts)
+7. Use modular import paths via tsconfig paths if needed
+8. Ensure controller and model naming are consistent and descriptive
+9. Write unit/integration tests for endpoints in 'test/' using Jest
+10. Keep the codebase clean with consistent naming, linting, and formatting
+`;
+
